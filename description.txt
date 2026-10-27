@@ -1,0 +1,38 @@
+[h1]Battle Details[/h1]
+See why a battle went the way it did: every dice roll day by day, flanks falling, armies joining, and for each side its commander and traits, morale, discipline, tactics, dice modifiers and units.
+
+[h2]Battle details[/h2]
+The battle result popup gets a [b]Battle details[/b] button. It lays the battle open, side by side:
+[list]
+[*][b]Victory or defeat[/b] over each side, with its flag and country.
+[*][b]Commander[/b] with administrative, diplomatic and military skill, and the traits that change a battle (general traits, and ruler traits such as Craven or Strict).
+[*][b]Dice modifiers[/b] as the sum of bonuses and of penalties; each modifier in the tooltip.
+[*][b]Morale at the start[/b] of the battle, out of its maximum.
+[*][b]Discipline, military tactics, levy combat efficiency, experience, frontage, combined arms[/b], each with its sources in the tooltip.
+[*][b]Units by type[/b]: the men at the start and the losses, with the regiments in the tooltips. A green or red arrow shows a terrain bonus or penalty for that type here.
+[/list]
+
+[h2]The course of the battle[/h2]
+Between the two sides, a line per day:
+[list]
+[*]every new dice roll, attacker : defender;
+[*]the day a flank fell or filled again, the side's three flanks as squares: green fighting, yellow with regiments not engaged, red empty;
+[*]armies that joined later, ours, allied or enemy, with their men and country, on their side; their regiments as they came in the tooltip.
+[/list]
+
+[h2]Battle Journal[/h2]
+The last 20 battles of your armies, in a panel of their own: open it from the Military panel (the crossed swords next to the army objective button) or from the peace popup at the end of a war. Click a battle for its full report.
+
+[h2]How it works[/h2]
+The game keeps none of this after a battle, so the mod notes it from the battle window once a day while one of your armies fights, during a war. That has a few limits:
+[list]
+[*]Only battles of your own armies, and only from the day they joined.
+[*]The battle's last day is fought on the tick that ends it: its roll isn't shown.
+[*]The battle journal lasts only for a single game session. Saves don't keep it, and I have neither the hands nor the tech to make that work.
+[*]In the journal, the outcome, the commanders and the units of a battle are known once its result popup was opened.
+[/list]
+
+[h2]Compatibility[/h2]
+Interface only, no script: safe to add or remove mid-game. It changes the vanilla battle result popup, the Military panel and the message popups (battle_result.gui, unit_overview.gui, messages.gui), so a mod that changes those files conflicts with it. Glorp UI doesn't touch them and works with it.
+
+English and Russian; other languages show the English text.
