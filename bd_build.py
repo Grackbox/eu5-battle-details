@@ -50,6 +50,11 @@ TEXT = {
         "BD_CAME_END": "#!",
         "BD_LOSSES_TT": "Lost: [BattleUnitStats.GetDestroyed|K1] killed, [BattleUnitStats.GetImprisoned|K1] captured.",
         "BD_LEFT": "Left at the end of the battle",
+        "BD_POWER": "[combat_power|E] (kills a day)",
+        "BD_POWER_TT": "About how many men these units kill a day at an average roll, against an enemy without [discipline|e]: the enemy's discipline divides it, and a high or low roll moves it a lot. From each unit type's [combat_power|e] and men, its terrain modifier here, the country's power for that kind of unit and its [discipline|e] (10 points less for levies), as the units joined the battle; scaled to kills by what a real battle gave, so a rough guide. Not in it: flanking, levy combat efficiency, the enemy's tactics and experience, and bonuses against a kind of enemy.",
+        "BD_LEVY_TAG": "@levy!",
+        "BD_TAIL": "#!@army_strength",
+        "BD_TAIL2": "@army_strength",
         "BD_JOURNAL": "Battle Journal",
         "BD_JOURNAL_TT": "Battle Journal: the last 20 battles of our armies in this session, with the chain of each.",
         "BD_JOURNAL_NOTE": "The last 20 battles of our armies, kept from the moment the game was started or loaded: a save doesn't keep them. Click a battle for its report; the outcome, the losses, the commanders and the units are known once its result popup was opened.",
@@ -95,6 +100,11 @@ TEXT = {
         "BD_CAME_END": "#!",
         "BD_LOSSES_TT": "Потери: [BattleUnitStats.GetDestroyed|K1] убито, [BattleUnitStats.GetImprisoned|K1] в плену.",
         "BD_LEFT": "Осталось к концу боя",
+        "BD_POWER": "[combat_power|E] (убитых в день)",
+        "BD_POWER_TT": "Примерно сколько человек эти войска убивают в день при среднем броске против противника без [discipline|e]: дисциплина противника делит это число, а высокий или низкий бросок сильно его сдвигает. Считается из [combat_power|e] и численности каждого типа полков, его модификатора местности здесь, силы страны для этого рода войск и её [discipline|e] (у ополчения на 10 пунктов меньше), по войскам на момент вступления в бой; переведено в убитых по настоящему бою, так что это прикидка. Не учтены: обход, эффективность ополчения, тактика и опыт противника и бонусы против рода войск противника.",
+        "BD_LEVY_TAG": "@levy!",
+        "BD_TAIL": "#!@army_strength",
+        "BD_TAIL2": "@army_strength",
         "BD_JOURNAL": "Журнал сражений",
         "BD_JOURNAL_TT": "Журнал сражений: последние 20 боёв наших армий за эту сессию, с ходом каждого.",
         "BD_JOURNAL_NOTE": "Последние 20 боёв наших армий с запуска или загрузки игры: в сохранение не попадают. Нажмите на бой, чтобы открыть отчёт; исход, потери, полководцы и войска видны, если открывали окно его результата.",
@@ -244,6 +254,13 @@ def popup_match():
     for n in range(NAMED, 0, -1):
         ok = f"And(EqualTo_string({get('atg', cand(n))}, {own['atg']}), EqualTo_string({get('dtg', cand(n))}, {own['dtg']}))"
         pick = f"Select_CString({ok}, {cand(n)}, {pick})"
+    # first of all one noted on the last day or the one before that the notes ran: the popup comes as its battle ends,
+    # and the countries noted are those of the sides' leading armies, an ally's at times, not the popup's
+    for n in range(NAMED, 0, -1):
+        day = get("day", cand(n))
+        recent = (f"And(Not(StringIsEmpty({day})), Or(EqualTo_string({day}, GetVariableSystem.Get('bd_today')), "
+                  f"EqualTo_string({day}, GetVariableSystem.Get('bd_yesterday'))))")
+        pick = f"Select_CString({recent}, {cand(n)}, {pick})"
     return pick
 
 
@@ -451,6 +468,182 @@ def unit_terrain():
     return out
 
 
+def power_types():
+    """category -> [(unit type, levy, combat power, {terrain: modifier})] for every land unit type, its combat power and
+    terrain modifiers as the game sums them along copy_from (and with its category's); one entry for a name (a levy is
+    a regiment of the same type), the shorter names first (a row naming "Camel Pistoleers" holds "Pistoleers" too: the longer
+    one, checked later, wins)."""
+    types = game_blocks("unit_types")
+    cats = game_blocks("unit_categories")
+    names = english_names()
+
+    def field(body, name):
+        m = re.search(rf"^\s*{name}\s*=\s*([A-Za-z0-9_.]+)", body, re.M)
+        return m.group(1) if m else None
+
+    def combat(body):
+        m = re.search(r"\bcombat\s*=\s*\{([^}]*)\}", body)
+        return {k: float(v) for k, v in re.findall(r"([a-z_]+)\s*=\s*(-?[0-9.]+)", m.group(1))} if m else {}
+
+    def resolved(key, seen=()):
+        body = types[key]
+        parent = field(body, "copy_from")
+        if parent in types and parent not in seen:
+            power, levy, mods, cat = resolved(parent, seen + (key,))
+        else:
+            power, levy, mods, cat = None, False, {}, None
+        mods = dict(mods)
+        for k, v in combat(body).items():
+            mods[k] = mods.get(k, 0) + v
+        own = field(body, "combat_power")
+        return (float(own) if own else power, levy or field(body, "levy") == "yes", mods, field(body, "category") or cat)
+
+    def shown_name(key):
+        name = names.get(key, key)
+        while name.startswith("$") and name.endswith("$") and name[1:-1] in names:
+            name = names[name[1:-1]]
+        return name
+
+    out, listed = {}, set()
+    for key, body in types.items():
+        if field(body, "empty") == "yes" or not key.startswith("a_"):
+            continue
+        power, levy, mods, cat = resolved(key)
+        if cat not in cats or not power:
+            continue
+        for k, v in combat(cats[cat]).items():
+            mods[k] = mods.get(k, 0) + v
+        mark = (cat, shown_name(key))
+        if mark not in listed:
+            listed.add(mark)
+            out.setdefault(cat, []).append((key, levy, power, {t: v for t, v in mods.items() if round(v, 2)}, len(mark[1])))
+    return {cat: [e[:4] for e in sorted(entries, key=lambda e: e[4])] for cat, entries in out.items()}
+
+
+POWER_TYPES = power_types()
+TERRAINS = sorted({t for entries in POWER_TYPES.values() for _, _, _, mods in entries for t in mods})
+
+
+def flat_number(name, digits):
+    """The number of the digits read into bd_tmp_<name>0.. (see read_digits), summed as a balanced tree: a flat one
+    nests too deep for the statements it goes into."""
+    def tree(parts, op):
+        while len(parts) > 1:
+            parts = [f"{op}({parts[i]}, {parts[i + 1]})" if i + 1 < len(parts) else parts[i] for i in range(0, len(parts), 2)]
+        return parts[0]
+    terms = []
+    for k in range(digits):
+        d = tmp(f"{name}{k}")
+        value = tree([f"Select_int32(EqualTo_string({d}, '{v}'), '(int32){v}', '(int32)0')" for v in range(1, 10)], "Add_int32")
+        terms.append(f"Multiply_int32({value}, '(int32){10 ** k}')")
+    return tree(terms, "Add_int32")
+
+
+def read_number(text, tail, name, digits, commas=False):
+    """read_digits for `digits` digits, and with commas between thousands (a strength as the game writes it: 33,550)."""
+    steps = [f"GetVariableSystem.Set('bd_tmp_s', {text})", f"GetVariableSystem.Set('bd_tmp_suf', {tail})"]
+    for k in range(digits):
+        if commas and k and k % 3 == 0:
+            steps.append(f"GetVariableSystem.Set('bd_tmp_suf', Select_CString(StringContains({tmp('s')}, Concatenate(',', {tmp('suf')})), "
+                         f"Concatenate(',', {tmp('suf')}), {tmp('suf')}))")
+        digit = "''"
+        for d in range(9, -1, -1):
+            digit = f"Select_CString(StringContains({tmp('s')}, Concatenate('{d}', {tmp('suf')})), '{d}', {digit})"
+        steps += [f"GetVariableSystem.Set('bd_tmp_{name}{k}', {digit})",
+                  f"GetVariableSystem.Set('bd_tmp_suf', Concatenate({tmp(f'{name}{k}')}, {tmp('suf')}))"]
+    return steps
+
+
+# A combat power (per thousand men) of the regiments in the line as men killed a day: at an average roll (5.5, a dice
+# impact of 10 + 2 x 4.5 = 19, as the wiki gives it) against an enemy of no discipline. Matched on five battles of 42
+# regiments of pistoleers (1561-62), the share in the line as noted: the enemy's real losses over what 76 gave (its
+# dice impact day by day / 19, its discipline and experience) were 0.27 (Wadi an-Natrun), 0.40 (Damanhur), 0.73
+# (Tidah, Feb), 0.35 (Tidah, Apr), 0.44 (Minuf), 0.42 on average: 76 x 0.42 = 32. A rough guide: one battle may be
+# off by half either way (the enemy's tactics, flanking, who stood where).
+KILLS_PER_POWER = 32
+
+
+def parse_share():
+    """The side's share of regiments in the line read by power_steps (thousandths)."""
+    return flat_number("h", 4)
+
+
+def power_steps(s, name, c):
+    """In the result popup, for a row of a unit category's units as noted (StringViewPair, 'N [type] men (pct)'): its
+    combat power, added once to the category's and the side's (the keys of the popup's battle, tmp 'pu'):
+    men / 1000 x the type's combat power x its terrain modifier here x (1 + the country's power of the category)
+    x (1 + discipline, 10 points less for levies). The steps read the men digit by digit (the GUI can't turn text into
+    numbers) and the type by its name, the longer names last."""
+    row, levy = tmp("row"), f"Not(StringIsEmpty({tmp('lv')}))"
+    country = f"BattleResultMessage.GetBattleResult.Get{name}.GetMainParticipant"
+    steps = [f"GetVariableSystem.Set('bd_tmp_pu', {popup_match()})",
+             "GetVariableSystem.Set('bd_tmp_row', StringViewPair.GetLeft.GetString)",
+             f"GetVariableSystem.Set('bd_tmp_lv', Select_CString(StringContains({row}, Localize('BD_LEVY_TAG')), '1', ''))",
+             "GetVariableSystem.Set('bd_tmp_cpi', '')", "GetVariableSystem.Set('bd_tmp_tfi', '')"]
+    # the side's share of regiments in the line over the battle, thousandths: the average frontage taken (x100 a day)
+    # over its regiments; all of them where it wasn't noted (a battle noted before)
+    for note, digits_name, digits in (("eng", "e", 7), ("engd", "x", 4), ("regs", "r", 5)):
+        old = f"GetVariableSystem.Get({side_total_key(repr(s), tmp('pu'), note)})"
+        steps += read_number(f"Concatenate(Select_CString(StringIsEmpty({old}), '0', {old}), '~')", "'~'", digits_name, digits)
+    eng, days, regs = flat_number("e", 7), flat_number("x", 4), flat_number("r", 5)
+    steps.append(f"GetVariableSystem.Set('bd_tmp_sh', ToString_int32(Select_int32(Or(EqualTo_int32({days}, '(int32)0'), "
+                 f"EqualTo_int32({regs}, '(int32)0')), '(int32)1000', Min_int32('(int32)1000', "
+                 f"Divide_int32(Multiply_int32({eng}, '(int32)10'), Multiply_int32({days}, {regs}))))))")
+    steps += read_number(f"Concatenate({tmp('sh')}, '~')", "'~'", "h", 4)
+    # the men stand before the strength icon, with or without the end of the number's format code
+    tail = "Select_CString(StringContains(GetVariableSystem.Get('bd_tmp_row'), Localize('BD_TAIL')), Localize('BD_TAIL'), Localize('BD_TAIL2'))"
+    steps += read_number(row, tail, "n", 7, commas=True)
+    for unit, is_levy, power, mods in POWER_TYPES.get(c, []):
+        # by its name alone: a levy is a regiment of the same unit type, marked as a levy in the row
+        match = f"StringContains({row}, Localize('{unit}'))"
+        terrain = [f"Select_int32(EqualTo_string({get(f'tr_{s}_{t}', tmp('pu'))}, '1'), '(int32){round(v * 100)}', '(int32)0')"
+                   for t, v in mods.items() if t in TERRAINS]
+        pct = "'(int32)100'"
+        for term in terrain:
+            pct = f"Add_int32({pct}, {term})"
+        steps += [f"GetVariableSystem.Set('bd_tmp_cpi', Select_CString({match}, '{round(power * 100)}', {tmp('cpi')}))",
+                  f"GetVariableSystem.Set('bd_tmp_tfi', Select_CString({match}, ToString_int32({pct}), {tmp('tfi')}))"]
+    steps += read_number(f"Concatenate(Select_CString(StringIsEmpty({tmp('cpi')}), '0', {tmp('cpi')}), '~')", "'~'", "c", 4)
+    steps += read_number(f"Concatenate(Select_CString(StringIsEmpty({tmp('tfi')}), '0', {tmp('tfi')}), '~')", "'~'", "f", 3)
+    pct = lambda m: f"FixedPointToInt(Multiply_CFixedPoint({country}.GetModifierRawValue('{m}'), '(CFixedPoint)100'))"
+    discipline = f"Subtract_int32({pct('discipline')}, Select_int32({levy}, '(int32)10', '(int32)0'))"
+    steps.append(f"GetVariableSystem.Set('bd_tmp_m', ToString_int32(Divide_int32(Multiply_int32(Add_int32('(int32)100', {pct(f'{c}_power')}), "
+                 f"Add_int32('(int32)100', {discipline})), '(int32)100')))")
+    steps += read_number(f"Concatenate({tmp('m')}, '~')", "'~'", "k", 3)
+    value = (f"Divide_int32(Multiply_int32(Divide_int32(Multiply_int32(Divide_int32(Multiply_int32({flat_number('n', 7)}, {flat_number('c', 4)}), "
+             f"'(int32)100'), {flat_number('f', 3)}), '(int32)100'), {flat_number('k', 3)}), '(int32)100')")
+    steps.append(f"GetVariableSystem.Set('bd_tmp_v', ToString_int32({value}))")
+    steps += read_number(f"Concatenate({tmp('v')}, '~')", "'~'", "v", 8)
+    # once a row (the popup may be opened again)
+    done = f"Concatenate3('bd_pwr_', Concatenate3({tmp('pu')}, '{s}{c}', {row}), '')"
+    for k, total in ((cat_key(s, f"GetSubUnitCategory('{c}')", tmp("pu"), "pw"), "p"), (key(f"{s}_pw", tmp("pu")), "q")):
+        old = f"GetVariableSystem.Get({k})"
+        steps += read_number(f"Concatenate(Select_CString(StringIsEmpty({old}), '0', {old}), '~')", "'~'", total, 8)
+        steps.append(f"GetVariableSystem.Set({k}, Select_CString(GetVariableSystem.Exists({done}), {old}, "
+                     f"ToString_int32(Add_int32({flat_number(total, 8)}, {flat_number('v', 8)}))))")
+        # and as shown: men killed a day, by the side's share of regiments in the line (tmp 'sh', thousandths)
+        steps += read_number(f"Concatenate({old}, '~')", "'~'", total, 8)
+        n = flat_number(total, 8)
+        steps.append(f"GetVariableSystem.Set(Concatenate({k}, '_f'), ToString_int32(Divide_int32(Multiply_int32(Divide_int32("
+                     f"Multiply_int32({n}, {parse_share()}), '(int32)1000'), '(int32){KILLS_PER_POWER}'), '(int32)1000')))")
+    steps.append(f"GetVariableSystem.Set({done}, '1')")
+    return steps
+
+
+def power_recorder():
+    """In the result popup: each row of each unit category's units as noted, as it is made (trigger_on_create: the rows
+    come as the popup's battle is found), worked out by power_steps."""
+    out = ""
+    for s, name in SIDES:
+        for c in POWER_TYPES:
+            units = f"GetVariableSystem.Get({cat_key(s, f'GetSubUnitCategory({chr(39)}{c}{chr(39)})', popup_match())})"
+            starts = "".join(f'\t\t\t\ton_start = "[{st}]"\n' for st in power_steps(s, name, c))
+            out += (f'vbox = {{\n\tdatacontext = "[StringToStringPairList({units})]"\n\tdatamodel = "[StringPairList.GetRows]"\n'
+                    '\titem = {\n\t\twidget = {\n\t\t\tsize = { 0 0 }\n\t\t\tstate = {\n\t\t\t\tname = bd_power\n\t\t\t\ttrigger_on_create = yes\n'
+                    + starts + '\t\t\t}\n\t\t}\n\t}\n}\n')
+    return out
+
+
 def terrain_lines(cat, units):
     """A category's terrain modifiers as lines (unit type or None for the category, terrain, value): what most of its
     types have goes for the category, and a type with another value gets a line of its own. Written per type, they
@@ -560,6 +753,8 @@ def arrivals():
         # checked every frame: by the battle's key as noted (the scratch one is set only within a chain of notes)
         seen = f"Concatenate3('bd_army_', ToString_int32(Unit.GetID), GetVariableSystem.Get(Concatenate('bd_token_', {BATTLE_SLOT})))"
         steps = battle_steps() + [f"GetVariableSystem.Set({seen}, '1')"] + day_event(later, f"j{s}", army, battle, add_to=True)
+        # its regiments, added to its side's (for the share of them in the line: frontage_steps)
+        steps += add_to_note(side_total_key(repr(s), battle, "regs"), "Unit.GetNumSubUnits", "g", 5)
         # and each army in a slot of its own that day (up to ARRIVALS a side), with its regiments for its tooltip
         index, add = tmp("idx"), "Not(StringIsEmpty(GetVariableSystem.Get('bd_tmp_add')))"
         free = lambda k: f"StringIsEmpty(GetVariableSystem.Get({day_key(index, battle, f'j{s}{k}t')}))"
@@ -584,6 +779,28 @@ FLANKS = ("Left", "Center", "Right")
 # the battle shown in the result popup, noted when its details are opened (see result_panel): read in each entry of
 # the chain, the whole key made the file too big
 SHOWN = "GetVariableSystem.Get('bd_shown')"
+
+
+def add_to_note(k, value, name, digits):
+    """on_start calls that add a whole number (an int32 expression) to a note kept as text."""
+    old = f"GetVariableSystem.Get({k})"
+    return (read_number(f"Concatenate(Select_CString(StringIsEmpty({old}), '0', {old}), '~')", "'~'", name, digits)
+            + [f"GetVariableSystem.Set({k}, ToString_int32(Add_int32({flat_number(name, digits)}, {value})))"])
+
+
+def frontage_steps():
+    """Each day, for each side: the frontage its regiments in the line take (x100), added up, and the days counted: the
+    battle's average share of a side's regiments in the line is the one over the other, over its regiments
+    (arrivals). The combat power is scaled by it (power_steps)."""
+    steps = []
+    for s, name in SIDES:
+        side = f"Combat.Get{name}"
+        engaged = f"Add_CFixedPoint(Add_CFixedPoint({side}.GetLeft.GetEngagedFrontage, {side}.GetCenter.GetEngagedFrontage), {side}.GetRight.GetEngagedFrontage)"
+        # the days of the main phase only: in the bombard phase the line doesn't fight
+        steps += add_to_note(side_total_key(repr(s), SUMS_LIVE, "eng"), f"Select_int32(Combat.IsInBombardPhase, '(int32)0', "
+                             f"FixedPointToInt(Multiply_CFixedPoint({engaged}, '(CFixedPoint)100')))", "g", 7)
+        steps += add_to_note(side_total_key(repr(s), SUMS_LIVE, "engd"), "Select_int32(Combat.IsInBombardPhase, '(int32)0', '(int32)1')", "g", 4)
+    return steps
 
 
 def flank_rows():
@@ -720,6 +937,12 @@ def recorder():
                   f"{s}_mor": f"Select_CString({same_battle}, {get(f'{s}_mor', SUMS_LIVE)}, {side}.GetMoraleTooltip)"}
     # the calls are made in order: the battle's id after all that read it (same_battle)
     notes |= {"id": SUMS_LIVE, "terr": TERRAIN}
+    # the battlefield's terrain, per side (a river is crossed by the attacker only), for the combat power (power_steps)
+    for t in TERRAINS:
+        for s, attacker in (("a", True), ("d", False)):
+            where = terrain_check(t, attacker)
+            if where:
+                notes[f"tr_{s}_{t}"] = f"Select_CString({where}, '1', '')"
     notes = {key(k, LIVE if k == 'id' else SUMS_LIVE): v for k, v in notes.items()}
     for s, name in SIDES:
         notes |= snapshots(s, f"Combat.Get{name}")
@@ -754,7 +977,7 @@ def recorder():
                          ("rb", "Select_CString(Combat.IsInBombardPhase, '1', '')")):
         k = day_key(tmp("idx"), SUMS_LIVE, field)
         roll_row.append(f"GetVariableSystem.Set({k}, Select_CString({split}, {value}, GetVariableSystem.Get({k})))")
-    starts += "".join(f'\t\ton_start = "[{st}]"\n' for st in roll_row + flank_rows())
+    starts += "".join(f'\t\ton_start = "[{st}]"\n' for st in roll_row + flank_rows() + frontage_steps())
     starts += "".join(f'\t\ton_start = "[GetVariableSystem.Set({k}, {v})]"\n' for k, v in notes.items())
     # Not inside a widget hidden with no battle, and checked by the army alone (whether it is in a battle, and its day
     # note), never by the battle: with no battle a check by the battle can't be worked out, and the widget kept its
@@ -762,26 +985,32 @@ def recorder():
     unit_day = "Concatenate('bd_uday_', ToString_int32(Unit.GetID))"
     starts = f'\t\ton_start = "[GetVariableSystem.Set({unit_day}, GetDateString)]"\n' + starts
     # A widget made anew while its check already holds never shows anew, and its note never runs again: the game
-    # remade the list's widgets whenever the list of armies changed, and the notes of a battle stopped there. The
-    # list now keeps its widgets (recorder); and a widget still made (a new army, the game loaded) marks its army
-    # noted today: it hides, and the next day shows it anew (a day lost at most).
+    # remakes the list's widgets whenever the list of armies changes (many times a day at times), and the notes of a
+    # battle stopped there. So a widget, when made, marks its army noted today: it hides, and the next day shows it
+    # anew (a day lost at most).
     made = f'\t\ton_start = "[GetVariableSystem.Set({unit_day}, GetDateString)]"\n'
     if DEBUG:
         made += ("\t\ton_start = \"[GetVariableSystem.Set('bd_remade', Concatenate(GetDateString, "
                  "Select_CString(EqualTo_string(GetVariableSystem.Get('bd_remade_day'), GetDateString), ' (again)', '')))]\"\n"
                  "\t\ton_start = \"[GetVariableSystem.Set('bd_remade_day', GetDateString)]\"\n")
-    note = (f'widget = {{\n\tsize = {{ 0 0 }}\n\tdatacontext = "[Unit.GetCombat]"\n'
-            f'\tvisible = "[And(Unit.GetCombat.IsValid, Not(EqualTo_string(GetVariableSystem.Get({unit_day}), GetDateString)))]"\n'
-            f'\tvisible_at_creation = no\n\tstate = {{\n\t\tname = _show\n{starts}\t}}\n'
-            f'\tstate = {{\n\t\tname = bd_made\n\t\ttrigger_on_create = yes\n{made}\t}}\n}}\n')
+    # Two of them, one for the odd days and one for the even: each hides the next day by the date alone, so one stuck
+    # shown without its note having run (it happened on the 1st of a month, the monthly tick's lag) shows anew two
+    # days on, and the other runs the note the day between. The first to run sets the day, so the other doesn't.
+    odd = "Or(Or3(StringContains(GetDateString, '1 '), StringContains(GetDateString, '3 '), StringContains(GetDateString, '5 ')), " \
+          "Or(StringContains(GetDateString, '7 '), StringContains(GetDateString, '9 ')))"
+    note = "".join(
+        f'widget = {{\n\tsize = {{ 0 0 }}\n\tdatacontext = "[Unit.GetCombat]"\n'
+        f'\tvisible = "[And3(Unit.GetCombat.IsValid, Not(EqualTo_string(GetVariableSystem.Get({unit_day}), GetDateString)), {parity})]"\n'
+        f'\tvisible_at_creation = no\n\tstate = {{\n\t\tname = _show\n{starts}\t}}\n'
+        f'\tstate = {{\n\t\tname = bd_made\n\t\ttrigger_on_create = yes\n{made}\t}}\n}}\n'
+        for parity in (odd, f"Not({odd})"))
     return ("# Battle Details (see bd_build.py): notes every battle of the player's armies while it goes on, once a day.\n"
             "# Nothing here is shown. In peace (no war, revolt, civil war or risen rebels) only the first check is made.\n"
             "widget = {\n\tname = \"bd_recorder\"\n\tsize = { 0 0 }\n"
             f"\tvisible = \"[{AT_WAR}]\"\n"
             +
-            # the widgets kept when the list of armies changes (recruiting, splitting, merging: many times a day at
-            # times), not made anew, as a widget made anew while its check holds never runs its note
-            "\tvbox = {\n\t\tdatamodel_reuse_widgets = yes\n\t\tdatamodel = \"[AccessPlayerUnits]\"\n"
+            # not datamodel_reuse_widgets: with it, the notes stopped on the 1st of a month
+            "\tvbox = {\n\t\tdatamodel = \"[AccessPlayerUnits]\"\n"
             # armies only: naval battles are left alone
             "\t\titem = {\n\t\t\twidget = {\n\t\t\t\tsize = { 0 0 }\n\t\t\t\tvisible = \"[Unit.IsArmy]\"\n" + indent(note, 4)
             + "\t\t\t\twidget = {\n\t\t\t\t\tsize = { 0 0 }\n\t\t\t\t\tvisible = \"[Unit.GetCombat.IsValid]\"\n"
@@ -971,6 +1200,7 @@ def unit_item(s, category, journal, name=None):
     losses_tip = tip(f"[{category}.GetNameWithNoTooltip]", texture, "[army|e]",
                      f'TooltipTextBlock = {{\n\tblockoverride "text" {{\n\t\ttext = "{lost_text}"\n\t}}\n}}\n'
                      + pair_list(left, "BD_LEFT", f"Not(StringIsEmpty({left}))"))
+    power = f"GetVariableSystem.Get(Concatenate({cat_key(s, category, SHOWN, 'pw')}, '_f'))"
     item = (f'hbox = {{\n\tvisible = "[{visible}]"\n\tspacing = 2\n'
             # the icon and the men at the start: its units in the tooltip
             f'\ticon = {{\n\t\tsize = {{ 28 28 }}\n\t\ttexture = "{texture}"\n\t\talwaystransparent = no\n' + units_tip + '\t}\n'
@@ -979,6 +1209,11 @@ def unit_item(s, category, journal, name=None):
             # in a column, each with its own tooltip: the men at the start, the losses (killed and captured); all to
             # the right, so that their digits line up, in a column of a set width (right-aligned lines give it none)
             + '\tvbox = {\n\t\tminimumsize = { 44 -1 }\n\t\tspacing = -4\n'
+            # its combat power (power_steps), yellow, with the game's icon
+            + f'\t\thbox = {{\n\t\t\tlayoutpolicy_horizontal = expanding\n\t\t\tspacing = 2\n\t\t\talwaystransparent = no\n\t\t\ttooltip = "BD_POWER_TT"\n'
+            f'\t\t\tvisible = "[Not(StringIsEmpty({power}))]"\n\t\t\texpand = {{}}\n'
+            f'\t\t\ticon = {{\n\t\t\t\tsize = {{ 12 12 }}\n\t\t\t\ttexture = "{ICON}unit_types/combat_power.dds"\n\t\t\t}}\n'
+            f'\t\t\ttext_single = {{\n\t\t\t\tfontsize = 13\n\t\t\t\tdefault_format = "#color_yellow"\n\t\t\t\ttext = "[{power}]"\n\t\t\t}}\n\t\t}}\n'
             + '\t\ttext_single = {\n\t\t\tlayoutpolicy_horizontal = expanding\n\t\t\talign = right|nobaseline\n\t\t\tfontsize = 13\n'
             f'\t\t\tdefault_format = "#high"\n\t\t\ttext = "{size}"\n\t\t\talwaystransparent = no\n'
             + indent(units_tip, 2) + '\t\t}\n'
@@ -990,8 +1225,16 @@ def unit_item(s, category, journal, name=None):
     # the six categories in two rows, the first four (infantry and cavalry) and the rest (artillery and auxiliary), so
     # that all fit the card (a dynamicgridbox here crashed the game)
     stats = f"BattleResultMessage.Get{name}.GetUnitStats"
-    return unit_rows([f'datamodel = "[{part}]"\nitem = {{\n' + indent(item, 1) + '}\n'
-                      for part in (f"DataModelFirst({stats}, '(int32)4')", f"DataModelSkipFirst({stats}, '(int32)4')")])
+    out = unit_rows([f'datamodel = "[{part}]"\nitem = {{\n' + indent(item, 1) + '}\n'
+                     for part in (f"DataModelFirst({stats}, '(int32)4')", f"DataModelSkipFirst({stats}, '(int32)4')")])
+    if DEBUG:
+        # TEST: the rows of each category's units as noted, left and right, to see what they hold
+        out += (f'vbox = {{\n\tlayoutpolicy_horizontal = expanding\n\tdatamodel = "[{stats}]"\n\titem = {{\n'
+                f'\t\tvbox = {{\n\t\t\tlayoutpolicy_horizontal = expanding\n\t\t\tdatacontext = "[StringToStringPairList({string})]"\n'
+                '\t\t\tdatamodel = "[StringPairList.GetRows]"\n\t\t\titem = {\n\t\t\t\ttext_single = {\n\t\t\t\t\tfontsize = 11\n'
+                '\t\t\t\t\traw_text = "TEST L<[StringViewPair.GetLeft.GetString]> R<[StringViewPair.GetRight.GetString]>"\n'
+                '\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\n')
+    return out
 
 
 def unit_rows(rows):
@@ -1104,6 +1347,11 @@ def result_side(s, name, journal=False):
         + stat(ICONS["combined"], "[combined_arms|E]", f"[{g('ca')}]",
                tip("game_concept_combined_arms", ICONS["combined"], "[combined_arms|e]", pair_list(g("cas"))),
                f"Not(StringIsEmpty({g('cas')}))")
+        # the side's combat power, the sum of its unit categories' (power_steps)
+        + stat(f"{ICON}unit_types/combat_power.dds", "BD_POWER", f"#color_yellow [GetVariableSystem.Get(Concatenate({key(f'{s}_pw', SHOWN)}, '_f'))]#!",
+               tip("BD_POWER", f"{ICON}unit_types/combat_power.dds", "[combat_power|e]",
+                   'TooltipTextBlock = {\n\tblockoverride "text" {\n\t\ttext = "BD_POWER_TT"\n\t}\n}\n'),
+               f"Not(StringIsEmpty(GetVariableSystem.Get(Concatenate({key(f'{s}_pw', SHOWN)}, '_f'))))")
         + unit_icons(s, name, journal)
         + "expand = {}\n"
     )
@@ -1169,6 +1417,8 @@ def result_panel():
         + (f'\ttext_single = {{\n\t\tlayoutpolicy_horizontal = expanding\n\t\talign = center|nobaseline\n\t\tfontsize = 11\n'
            f'\t\traw_text = "TEST [{SHOWN}], last fired [GetVariableSystem.Get(Concatenate(\'bd_fired_\', {SHOWN}))], '
            f'last noted [{get("day", SHOWN)}], days [GetVariableSystem.Get(Concatenate(\'bd_days_\', {SHOWN}))]; '
+           f'power: men [{tmp("n6")}{tmp("n5")}{tmp("n4")}{tmp("n3")}{tmp("n2")}{tmp("n1")}{tmp("n0")}] cp [{tmp("cpi")}] terrain [{tmp("tfi")}] '
+           f'country [{tmp("m")}] levy [{tmp("lv")}] value [{tmp("v")}] in [{tmp("pu")}]; '
            f'last chain [GetVariableSystem.Get(\'bd_lastfire\')]; new keys made until [GetVariableSystem.Get(\'bd_probe_ok\')]; '
            f'seen [GetVariableSystem.Get(\'bd_seen\')]"\n\t}}\n'
            if DEBUG else '')
@@ -1313,7 +1563,7 @@ def journal_outcome():
     starts = "".join(f'\t\ton_start = "[{st}]"\n' for st in steps)
     return (f'widget = {{\n\tsize = {{ 0 0 }}\n\tvisible = "[{recorded}]"\n\tvisible_at_creation = no\n'
             '\tstate = {\n\t\tname = _show\n' + starts + '\t}\n}\n'
-            + units)
+            + units + power_recorder())
 
 
 JOURNAL_LIST_WIDTH = 290

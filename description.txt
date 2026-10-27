@@ -9,6 +9,7 @@ The battle result popup gets a [b]Battle details[/b] button. It lays the battle 
 [*][b]Dice modifiers[/b] as the sum of bonuses and of penalties; each modifier in the tooltip.
 [*][b]Morale at the start[/b] of the battle, out of its maximum.
 [*][b]Discipline, military tactics, levy combat efficiency, experience, frontage, combined arms[/b], each with its sources in the tooltip.
+[*][b]Combat power[/b], per side and unit type, as about how many men it kills a day at an average roll against an enemy without discipline: from each unit type's combat power, terrain, the country's bonuses, discipline and the share of regiments in the line. A rough guide, matched on real battles.
 [*][b]Units by type[/b]: the men at the start and the losses, with the regiments in the tooltips. A green or red arrow shows a terrain bonus or penalty for that type here.
 [/list]
 
