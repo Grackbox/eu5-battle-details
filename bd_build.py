@@ -32,34 +32,33 @@ TEXT = {
     "english": {
         "BD_DETAILS": "Battle details",
         "BD_HIDE": "Losses",
-        "BD_TITLE": "Battle details",
-        "BD_LOG_NOTE": "A new roll every 4 days: 1 to 10 plus the modifiers (commander, terrain, crossing). Two equal rolls in a row show as one. On the left for the attacker and on the right for the defender: in green an army that joined the battle (its men and country); the day a flank fell or filled again, the side's flanks, left, centre and right: green fighting, yellow with regiments not engaged, red with none.",
+        "BD_LOG_NOTE": "A new roll every 4 days. Squares: the side's flanks when one fell or filled again (green fighting, yellow waiting, red empty). Green: armies that joined.",
         "BD_NO_LOG": "No rolls yet.",
-        "BD_NO_RECORD": "This battle was not recorded: none of our armies fought in it, or the game was loaded while it went on.",
-        "BD_STACK_WIPE": "A stack wipe: the losing army was destroyed outright, with no days of fighting, so there are no rolls or flanks to show. Its losses are on the Losses page.",
-        "BD_AT_END": "As on the last day of the battle; morale as it began.",
+        "BD_NO_RECORD": "Not recorded: none of our armies fought in it, or the game was loaded during it.",
+        "BD_STACK_WIPE": "Stack wipe: the army was destroyed at once, with no days of fighting.",
+        "BD_MORR_TITLE": "Recovery a day:",
+        "BD_MORR_FRIENDLY": " in friendly territory)",
+        "BD_MORMV_TITLE": "Lost to moving a day:",
+        "BD_BASE_TAG": "Base Value for Every",
+        "BD_MORAT_TITLE": "Lost to [attrition|e] a day:",
         "BD_MORALE_START": "[morale|E] at the start (of max)",
         "BD_DICE_MODS": "[dice|E] modifiers",
         "BD_NO_DICE_MODS": "No modifiers: the roll counts as it fell.",
         "BD_RIVER_TERRAIN": "River",
         "BD_TERRAIN_TITLE": "Terrain",
         "BD_EXPERIENCE": "[experience|E] (country average)",
-        "BD_FELL": "#N ",
-        "BD_FELL_END": " fell#!",
         "BD_CAME": "#P +",
         "BD_CAME_END": "#!",
         "BD_LOSSES_TT": "Lost: [BattleUnitStats.GetDestroyed|K1] killed, [BattleUnitStats.GetImprisoned|K1] captured.",
         "BD_LEFT": "Left at the end of the battle",
-        "BD_POWER": "[combat_power|E] (kills a day)",
-        "BD_POWER_TT": "About how many men these units kill a day at an average roll, against an enemy without [discipline|e]: the enemy's discipline divides it, and a high or low roll moves it a lot. From each unit type's [combat_power|e] and men, its terrain modifier here, the country's power for that kind of unit and its [discipline|e] (10 points less for levies), as the units joined the battle; scaled to kills by what a real battle gave, so a rough guide. Not in it: flanking, levy combat efficiency, the enemy's tactics and experience, and bonuses against a kind of enemy.",
+        "BD_POWER_TT": "Kills a day at an average roll, before the enemy's [discipline|e]. A rough guide.",
         "BD_LEVY_TAG": "@levy!",
         "BD_TAIL": "#!@army_strength",
         "BD_TAIL2": "@army_strength",
         "BD_JOURNAL": "Battle Journal",
-        "BD_JOURNAL_TT": "Battle Journal: the last 20 battles of our armies in this session, with the chain of each.",
-        "BD_JOURNAL_NOTE": "The last 20 battles of our armies, kept from the moment the game was started or loaded: a save doesn't keep them. Click a battle for its report; the outcome, the losses, the commanders and the units are known once its result popup was opened.",
+        "BD_JOURNAL_TT": "The last 20 battles of this session.",
+        "BD_JOURNAL_NOTE": "The last 20 battles of our armies since the game was started or loaded: a save doesn't keep them.",
         "BD_JOURNAL_EMPTY": "No battles of our armies yet in this session.",
-        "BD_JOURNAL_PICK": "Pick a battle on the left.",
         "BD_JOURNAL_ROW_TT": "Open the battle's report.",
         "BD_LOST_PRE": "Lost: ",
         "BD_LOST_MID": " killed, ",
@@ -68,13 +67,12 @@ TEXT = {
         "BD_MOST": " (most types)",
         "BD_NO_COMMANDER": "none",
         "BD_TRAITS": "General traits: ",
-        "BD_NO_TRAITS": "No general traits noted (they are, once the battle's result popup was opened).",
+        "BD_NO_TRAITS": "No traits noted.",
         "BD_WON": "#P Victory#!",
         "BD_LOST": "#N Defeat#!",
-        "BD_UNITS": "Units",
         "BD_SEP": "\\n",
         "BD_BOMBARD": " ($game_concept_bombard_phase$)",
-        "BD_BOMBARD_TT": "A roll of the [bombard_phase|E]: on these days only the regiments that can bombard fight, such as artillery.",
+        "BD_BOMBARD_TT": "A roll of the [bombard_phase|E].",
         "BD_RIVER": ", $game_concept_river_crossing$",
         "BD_STRAIT": ", strait crossing",
         "BD_LANDING": ", landing from the sea",
@@ -82,34 +80,33 @@ TEXT = {
     "russian": {
         "BD_DETAILS": "Подробности боя",
         "BD_HIDE": "Потери",
-        "BD_TITLE": "Подробности боя",
-        "BD_LOG_NOTE": "Новый бросок каждые 4 дня: от 1 до 10 плюс модификаторы (полководец, местность, переправа). Два одинаковых броска подряд видны как один. Слева у атакующего и справа у защитника: зелёным армия, вступившая в бой (численность и страна); в день, когда фланг рухнул или заполнился снова, — фланги стороны, левый, центр и правый: зелёный в бою, жёлтый с полками не в бою, красный без полков.",
+        "BD_LOG_NOTE": "Новый бросок каждые 4 дня. Квадраты: фланги стороны, когда один рухнул или заполнился снова (зелёный в бою, жёлтый ждёт, красный пуст). Зелёным: пришедшие армии.",
         "BD_NO_LOG": "Бросков ещё не было.",
-        "BD_NO_RECORD": "Этот бой не записан: в нём не было наших армий, или игру загрузили, пока он шёл.",
-        "BD_STACK_WIPE": "Разгром без боя (stack wipe): проигравшую армию уничтожили сразу, дней боя не было, поэтому нет ни бросков, ни флангов. Её потери — на странице потерь.",
-        "BD_AT_END": "На последний день боя; мораль на его начало.",
+        "BD_NO_RECORD": "Не записан: наших армий в бою не было, или игру загрузили, пока он шёл.",
+        "BD_STACK_WIPE": "Разгром без боя: армию уничтожили сразу, дней боя не было.",
+        "BD_MORR_TITLE": "Восстановление в день:",
+        "BD_MORR_FRIENDLY": " на дружественной территории)",
+        "BD_MORMV_TITLE": "Потери при перемещении в день:",
+        "BD_BASE_TAG": "Базовое значение для каждой",
+        "BD_MORAT_TITLE": "Потери от [attrition|e] в день:",
         "BD_MORALE_START": "[morale|E] в начале (из макс.)",
         "BD_DICE_MODS": "Модификаторы [dice|e]",
         "BD_NO_DICE_MODS": "Модификаторов нет: бросок идёт как выпал.",
         "BD_RIVER_TERRAIN": "Река",
         "BD_TERRAIN_TITLE": "Местность",
         "BD_EXPERIENCE": "[experience|E] (средний по стране)",
-        "BD_FELL": "#N ",
-        "BD_FELL_END": " — рухнул#!",
         "BD_CAME": "#P +",
         "BD_CAME_END": "#!",
         "BD_LOSSES_TT": "Потери: [BattleUnitStats.GetDestroyed|K1] убито, [BattleUnitStats.GetImprisoned|K1] в плену.",
         "BD_LEFT": "Осталось к концу боя",
-        "BD_POWER": "[combat_power|E] (убитых в день)",
-        "BD_POWER_TT": "Примерно сколько человек эти войска убивают в день при среднем броске против противника без [discipline|e]: дисциплина противника делит это число, а высокий или низкий бросок сильно его сдвигает. Считается из [combat_power|e] и численности каждого типа полков, его модификатора местности здесь, силы страны для этого рода войск и её [discipline|e] (у ополчения на 10 пунктов меньше), по войскам на момент вступления в бой; переведено в убитых по настоящему бою, так что это прикидка. Не учтены: обход, эффективность ополчения, тактика и опыт противника и бонусы против рода войск противника.",
+        "BD_POWER_TT": "Убитых в день при среднем броске, без учёта [discipline|e] противника. Ориентир.",
         "BD_LEVY_TAG": "@levy!",
         "BD_TAIL": "#!@army_strength",
         "BD_TAIL2": "@army_strength",
         "BD_JOURNAL": "Журнал сражений",
-        "BD_JOURNAL_TT": "Журнал сражений: последние 20 боёв наших армий за эту сессию, с ходом каждого.",
-        "BD_JOURNAL_NOTE": "Последние 20 боёв наших армий с запуска или загрузки игры: в сохранение не попадают. Нажмите на бой, чтобы открыть отчёт; исход, потери, полководцы и войска видны, если открывали окно его результата.",
+        "BD_JOURNAL_TT": "Последние 20 боёв этой сессии.",
+        "BD_JOURNAL_NOTE": "Последние 20 боёв наших армий с запуска или загрузки игры: в сохранение не попадают.",
         "BD_JOURNAL_EMPTY": "В этой сессии наши армии ещё не сражались.",
-        "BD_JOURNAL_PICK": "Выберите бой слева.",
         "BD_JOURNAL_ROW_TT": "Открыть отчёт о бое.",
         "BD_LOST_PRE": "Потери: ",
         "BD_LOST_MID": " убито, ",
@@ -118,13 +115,12 @@ TEXT = {
         "BD_MOST": " (большинство типов)",
         "BD_NO_COMMANDER": "нет",
         "BD_TRAITS": "Черты полководца: ",
-        "BD_NO_TRAITS": "Черты полководца не записаны (их записывает окно результата боя, когда его открывают).",
+        "BD_NO_TRAITS": "Черты не записаны.",
         "BD_WON": "#P Победа#!",
         "BD_LOST": "#N Поражение#!",
-        "BD_UNITS": "Состав войск",
         "BD_SEP": "\\n",
         "BD_BOMBARD": " ($game_concept_bombard_phase$)",
-        "BD_BOMBARD_TT": "[bombard_phase|E]: бросок дня, когда бьют только полки, способные обстреливать, например артиллерия.",
+        "BD_BOMBARD_TT": "Бросок [bombard_phase|E].",
         "BD_RIVER": ", $game_concept_river_crossing$",
         "BD_STRAIT": ", переправа через пролив",
         "BD_LANDING": ", высадка с моря",
@@ -181,6 +177,13 @@ def pct(x):
     """A fixed point value as a whole percent with its sign: 0.152 -> '+15%'."""
     return (f"Concatenate3(Select_CString(GreaterThan_CFixedPoint({x}, '(CFixedPoint)0'), '+', ''), "
             f"ToString_int32(FixedPointToInt(Multiply_CFixedPoint({x}, '(CFixedPoint)100'))), '%')")
+
+
+def morale_cost(x):
+    """A morale cost a day (a fraction of the maximum) as a percent with two decimals, '' when nothing: 0.0123 ->
+    '-1.23%'."""
+    return (f"Select_CString(GreaterThan_CFixedPoint({x}, '(CFixedPoint)0'), "
+            f"Concatenate3('-', {dec2(f'Multiply_CFixedPoint({x}, {chr(39)}(CFixedPoint)100{chr(39)})')}, '%'), '')")
 
 
 def dec2(x):
@@ -934,7 +937,22 @@ def recorder():
         side = f"Combat.Get{name}"
         notes |= {f"{s}_morv": f"Select_CString({same_battle}, {get(f'{s}_morv', SUMS_LIVE)}, Concatenate3("
                                 f"{dec2(f'{side}.GetAverageMorale')}, ' / ', {dec2(f'{side}.GetMaxMorale')}))",
-                  f"{s}_mor": f"Select_CString({same_battle}, {get(f'{s}_mor', SUMS_LIVE)}, {side}.GetMoraleTooltip)"}
+                  f"{s}_mor": f"Select_CString({same_battle}, {get(f'{s}_mor', SUMS_LIVE)}, {side}.GetMoraleTooltip)",
+                  # what makes the maximum, of the side's leading army (as the game's army tooltip has it)
+                  f"{s}_mors": f"Select_CString({same_battle}, {get(f'{s}_mors', SUMS_LIVE)}, {side}.GetLeadingUnit.GetMaxMoraleInfo)"}
+        # whether it began below its maximum (1% off at least), and then what raises and lowers morale a day
+        unit = f"{side}.GetLeadingUnit"
+        low = f"LessThan_CFixedPoint({side}.GetAverageMorale, Multiply_CFixedPoint({side}.GetMaxMorale, '(CFixedPoint)0.99'))"
+        for k, v in (("mrs", dec2(f"{side}.GetAverageMorale")), ("mrm", dec2(f"{side}.GetMaxMorale")),
+                     ("morlow", f"Select_CString({low}, '1', '')"), ("morrp", f"Concatenate3('+', {dec2(f'Multiply_CFixedPoint({unit}.GetMoraleRecoveryPercent, {chr(39)}(CFixedPoint)100{chr(39)})')}, '%')"),
+                     ("morr", f"{unit}.GetMoraleRecoveryInfo"), ("mormv", f"{unit}.GetMovementMoraleCostInfo"),
+                     ("morat", f"{unit}.GetAttritionMoraleCostInfo"),
+                     # in friendly territory the game lists a bonus of its own, not in the day's recovery above
+                     ("morfr", f"Select_CString(StringContains({unit}.GetMoraleRecoveryInfo, Localize('MODIFIER_TYPE_NAME_morale_recovery_in_friendly')), "
+                               f"Concatenate3('+', {dec2(f'Multiply_CFixedPoint({unit}.GetCountry.GetModifierRawValue({chr(39)}morale_recovery_in_friendly{chr(39)}), {chr(39)}(CFixedPoint)100{chr(39)})')}, '%'), '')"),
+                     # the day's losses to moving and to attrition, as percents of the maximum; none when nothing
+                     ("mmvv", morale_cost(f"{unit}.GetMovementMoraleCost")), ("matv", morale_cost(f"{unit}.GetAttritionMoraleCost"))):
+            notes[f"{s}_{k}"] = f"Select_CString({same_battle}, {get(f'{s}_{k}', SUMS_LIVE)}, {v})"
     # the calls are made in order: the battle's id after all that read it (same_battle)
     notes |= {"id": SUMS_LIVE, "terr": TERRAIN}
     # the battlefield's terrain, per side (a river is crossed by the attacker only), for the combat power (power_steps)
@@ -1318,6 +1336,51 @@ def commander(s=None):
             + indent(abilities, 2) + '\t}\n}\n')
 
 
+def morale_row(g):
+    """Morale at the start of max, each number with its own tooltip: the start's the game's morale tooltip and, if it
+    was below the maximum, what raised and lowered it a day; the maximum's what makes it. (A battle noted before the
+    two were kept apart shows them as one.)"""
+    # the modifiers alone: not the base value, nor attrition's multiplier (MORALE_ATTRITION_SCALING, English in every
+    # language)
+    left = "StringViewPair.GetLeft.GetString"
+    is_modifier = f"Not(Or(StringContains({left}, Localize('BD_BASE_TAG')), StringContains({left}, 'Multiplied by')))"
+
+    def rates(info, title, total, shown, filtered=True):
+        row_shown = is_modifier if filtered else f"Not(StringContains({left}, 'Multiplied by'))"
+        rows = (f'vbox = {{\n\tlayoutpolicy_horizontal = expanding\n\tminimumsize = {{ 300 -1 }}\n\tvisible = "[{shown}]"\n'
+                f'\ttext_single = {{\n\t\tmargin = {{ 8 4 }}\n\t\tdefault_format = "#high"\n'
+                f'\t\ttext = "[Concatenate3(Localize(\'{title}\'), \' \', {total})]"\n\t}}\n'
+                f'\tvbox = {{\n\t\tlayoutpolicy_horizontal = expanding\n\t\tdatacontext = "[StringToStringPairList({info})]"\n'
+                '\t\tdatamodel = "[StringPairList.GetRows]"\n\t\titem = {\n'
+                f'\t\t\thbox = {{\n\t\t\t\tvisible = "[{row_shown}]"\n\t\t\t\tlayoutpolicy_horizontal = expanding\n\t\t\t\tmargin = {{ 8 2 }}\n'
+                '\t\t\t\ttext_single = {\n\t\t\t\t\ttext = "[StringViewPair.GetLeft.GetStringView]"\n\t\t\t\t}\n\t\t\t\texpand = {}\n'
+                '\t\t\t\ttext_single = {\n\t\t\t\t\ttext = "[StringViewPair.GetRight.GetStringView]"\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\n')
+        return rows
+
+    low = f"EqualTo_string({g('morlow')}, '1')"
+    start = tip("game_concept_morale", ICONS["morale"], "[morale|e]",
+                # recovery with its base value (the most of it), the losses without (it is multiplied away)
+                rates(g("morr"), "BD_MORR_TITLE", f"Concatenate({g('morrp')}, Select_CString(StringIsEmpty({g('morfr')}), '', "
+                      f"Concatenate3(' (', {g('morfr')}, Localize('BD_MORR_FRIENDLY'))))", low, filtered=False)
+                + rates(g("mormv"), "BD_MORMV_TITLE", g("mmvv"), f"And({low}, Not(StringIsEmpty({g('mmvv')})))")
+                + rates(g("morat"), "BD_MORAT_TITLE", g("matv"), f"And({low}, Not(StringIsEmpty({g('matv')})))"))
+    maximum = tip("game_concept_morale", ICONS["morale"], "[morale|e]", pair_list(g("mors"), "MAX_MORALE_DUE_TO"))
+    split = f"Not(StringIsEmpty({g('mrs')}))"
+    value = lambda text, tooltip, when, tip_when=None: (
+        f'\ttext_single = {{\n\t\tfontsize = 15\n\t\tdefault_format = "#high"\n\t\tvisible = "[{when}]"\n'
+        f'\t\traw_text = "{text}"\n\t\talwaystransparent = no\n'
+        + (f'\t\ttooltip_enabled = "[{tip_when}]"\n' if tip_when else '') + indent(tooltip, 2) + '\t}\n')
+    # the start's tooltip only when it began below its maximum (there is nothing else in it); a battle noted before
+    # the numbers were kept apart shows them as one, with the maximum's tooltip
+    return ('hbox = {\n\tlayoutpolicy_horizontal = expanding\n\tmargin = { 6 2 }\n\tspacing = 6\n\tusing = bg_text_mask_container_brown\n'
+            f'\ticon = {{\n\t\tsize = {{ 24 24 }}\n\t\ttexture = "{ICONS["morale"]}"\n\t}}\n'
+            '\ttext_single = {\n\t\tfontsize = 15\n\t\ttext = "BD_MORALE_START"\n\t}\n\texpand = {}\n'
+            + value(f"[{g('mrs')}]", start, split, low)
+            + f'\ttext_single = {{\n\t\tfontsize = 15\n\t\tdefault_format = "#high"\n\t\tvisible = "[{split}]"\n\t\traw_text = " / "\n\t}}\n'
+            + value(f"[{g('mrm')}]", maximum, split)
+            + value(f"[{g('morv')}]", maximum, f"Not({split})") + '}\n')
+
+
 def result_side(s, name, journal=False):
     """One side in the result popup, from the notes (datacontext BattleSide); in the journal all as noted, the country
     by its tag."""
@@ -1332,8 +1395,7 @@ def result_side(s, name, journal=False):
         '\texpand = {}\n}\n'
         + commander(s if journal else None)
         + dice_row(s, g("dice"))
-        + stat(ICONS["morale"], "BD_MORALE_START", f"[{g('morv')}]",
-               tip("game_concept_morale", ICONS["morale"], "[morale|e]", pair_list(g("mor"))))
+        + morale_row(g)
         + stat(ICONS["discipline"], "[discipline|E]", f"[{g('disc')}]",
                tip("game_concept_discipline", ICONS["discipline"], "[discipline|e]", fogged(country, g("discs"))))
         + stat(ICONS["tactics"], "[military_tactics|E]", f"[{g('tac')}]",
