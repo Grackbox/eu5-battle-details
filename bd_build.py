@@ -1788,7 +1788,7 @@ def main():
     for lang in LANGS:
         lines = TEXT.get(lang, TEXT["english"])
         write(f"main_menu/localization/{lang}/bd_l_{lang}.yml", f"l_{lang}:\n" + "".join(f' {k}: "{v}"\n' for k, v in lines.items()))
-    meta = {"name": "Battle Details" if RELEASE else "Battle Details [LOCAL]", "id": "grackbox.battle_details", "version": "0.1.0", "game_id": "eu5",
+    meta = {"name": "Battle Details" if RELEASE else "Battle Details [LOCAL]", "id": "grackbox.battle_details", "version": "0.1.1", "game_id": "eu5",
             "supported_game_version": "1.4.*",
             "short_description": "The battle window and the battle result laid open: dice and their sources, morale, discipline, tactics, and every roll.",
             "tags": ["User Interface", "Military", "1.4"],
