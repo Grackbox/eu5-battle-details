@@ -37,7 +37,6 @@ TEXT = {
         "BD_NO_RECORD": "Not recorded: none of our armies fought in it, or the game was loaded during it.",
         "BD_STACK_WIPE": "Stack wipe: the army was destroyed at once, with no days of fighting.",
         "BD_MORR_TITLE": "Recovery a day:",
-        "BD_MORR_FRIENDLY": " in friendly territory)",
         "BD_MORMV_TITLE": "Lost to moving a day:",
         "BD_BASE_TAG": "Base Value for Every",
         "BD_MORAT_TITLE": "Lost to [attrition|e] a day:",
@@ -85,7 +84,6 @@ TEXT = {
         "BD_NO_RECORD": "Не записан: наших армий в бою не было, или игру загрузили, пока он шёл.",
         "BD_STACK_WIPE": "Разгром без боя: армию уничтожили сразу, дней боя не было.",
         "BD_MORR_TITLE": "Восстановление в день:",
-        "BD_MORR_FRIENDLY": " на дружественной территории)",
         "BD_MORMV_TITLE": "Потери при перемещении в день:",
         "BD_BASE_TAG": "Базовое значение для каждой",
         "BD_MORAT_TITLE": "Потери от [attrition|e] в день:",
@@ -947,9 +945,6 @@ def recorder():
                      ("morlow", f"Select_CString({low}, '1', '')"), ("morrp", f"Concatenate3('+', {dec2(f'Multiply_CFixedPoint({unit}.GetMoraleRecoveryPercent, {chr(39)}(CFixedPoint)100{chr(39)})')}, '%')"),
                      ("morr", f"{unit}.GetMoraleRecoveryInfo"), ("mormv", f"{unit}.GetMovementMoraleCostInfo"),
                      ("morat", f"{unit}.GetAttritionMoraleCostInfo"),
-                     # in friendly territory the game lists a bonus of its own, not in the day's recovery above
-                     ("morfr", f"Select_CString(StringContains({unit}.GetMoraleRecoveryInfo, Localize('MODIFIER_TYPE_NAME_morale_recovery_in_friendly')), "
-                               f"Concatenate3('+', {dec2(f'Multiply_CFixedPoint({unit}.GetCountry.GetModifierRawValue({chr(39)}morale_recovery_in_friendly{chr(39)}), {chr(39)}(CFixedPoint)100{chr(39)})')}, '%'), '')"),
                      # the day's losses to moving and to attrition, as percents of the maximum; none when nothing
                      ("mmvv", morale_cost(f"{unit}.GetMovementMoraleCost")), ("matv", morale_cost(f"{unit}.GetAttritionMoraleCost"))):
             notes[f"{s}_{k}"] = f"Select_CString({same_battle}, {get(f'{s}_{k}', SUMS_LIVE)}, {v})"
@@ -1161,16 +1156,18 @@ def log_title():
 
 
 def terrain_arrows(s, category):
-    """Next to a unit category: a green arrow up if a unit type of it in the battle fights better on this battlefield,
-    a red one down if worse (both if both); which and how much in their tooltip (noted by terrain_notes)."""
+    """On a unit category's icon, at its right edge: a green arrow up at the top if a unit type of it in the battle
+    fights better on this battlefield, a red one down at the bottom if worse (both if both); which and how much in
+    their tooltip (noted by terrain_notes)."""
     arrows = ""
-    for which, sign, texture, color in (("p", "+", "arrow_up", "{ 0.35 0.85 0.35 1 }"), ("n", "−", "arrow_down", "{ 0.95 0.3 0.3 1 }")):
+    for which, sign, texture, color, corner in (("p", "+", "arrow_up", "{ 0.35 0.85 0.35 1 }", "top"),
+                                                ("n", "−", "arrow_down", "{ 0.95 0.3 0.3 1 }", "bottom")):
         notes = f"GetVariableSystem.Get(Concatenate3('bd_{s}_ter{which}_', {category}.GetNameWithNoTooltip, {SHOWN}))"
-        arrows += (f'icon = {{\n\tsize = {{ 11 11 }}\n\ttexture = "{ICON}flat_icons/{texture}.dds"\n\tcolor = {color}\n'
+        arrows += (f'icon = {{\n\tsize = {{ 11 11 }}\n\tparentanchor = right|{corner}\n\ttexture = "{ICON}flat_icons/{texture}.dds"\n\tcolor = {color}\n'
                    f'\tvisible = "[StringContains({notes}, \'{sign}\')]"\n\talwaystransparent = no\n'
                    + indent(tip("BD_TERRAIN_TITLE", f"{ICON}flat_icons/{texture}.dds", "[topography|e]",
                                 f'TooltipTextBlock = {{\n\tblockoverride "text" {{\n\t\ttext = "[{notes}]"\n\t}}\n}}\n'), 1) + '}\n')
-    return 'vbox = {\n\tspacing = 0\n' + indent(arrows, 1) + '}\n'
+    return arrows
 
 
 def fmt_k(x):
@@ -1221,12 +1218,15 @@ def unit_item(s, category, journal, name=None):
     power = f"GetVariableSystem.Get(Concatenate({cat_key(s, category, SHOWN, 'pw')}, '_f'))"
     item = (f'hbox = {{\n\tvisible = "[{visible}]"\n\tspacing = 2\n'
             # the icon and the men at the start: its units in the tooltip
-            f'\ticon = {{\n\t\tsize = {{ 28 28 }}\n\t\ttexture = "{texture}"\n\t\talwaystransparent = no\n' + units_tip + '\t}\n'
-            # the terrain arrows right by the icon
-            + indent(terrain_arrows(s, category), 1)
+            # with the terrain arrows on its right edge
+            + f'\twidget = {{\n\t\tsize = {{ 28 28 }}\n'
+            f'\t\ticon = {{\n\t\t\tsize = {{ 28 28 }}\n\t\t\ttexture = "{texture}"\n\t\t\talwaystransparent = no\n' + indent(units_tip, 1) + '\t\t}\n'
+            + indent(terrain_arrows(s, category), 2)
+            + '\t}\n'
             # in a column, each with its own tooltip: the men at the start, the losses (killed and captured); all to
-            # the right, so that their digits line up, in a column of a set width (right-aligned lines give it none)
-            + '\tvbox = {\n\t\tminimumsize = { 44 -1 }\n\t\tspacing = -4\n'
+            # the right, so that their digits line up, in a column of a set width (right-aligned lines give it none),
+            # as wide as '-18.3K', the same for every category so that the two rows line up
+            + '\tvbox = {\n\t\tminimumsize = { 40 -1 }\n\t\tmaximumsize = { 40 -1 }\n\t\tspacing = -4\n'
             # its combat power (power_steps), yellow, with the game's icon
             + f'\t\thbox = {{\n\t\t\tlayoutpolicy_horizontal = expanding\n\t\t\tspacing = 2\n\t\t\talwaystransparent = no\n\t\t\ttooltip = "BD_POWER_TT"\n'
             f'\t\t\tvisible = "[Not(StringIsEmpty({power}))]"\n\t\t\texpand = {{}}\n'
@@ -1360,8 +1360,7 @@ def morale_row(g):
     low = f"EqualTo_string({g('morlow')}, '1')"
     start = tip("game_concept_morale", ICONS["morale"], "[morale|e]",
                 # recovery with its base value (the most of it), the losses without (it is multiplied away)
-                rates(g("morr"), "BD_MORR_TITLE", f"Concatenate({g('morrp')}, Select_CString(StringIsEmpty({g('morfr')}), '', "
-                      f"Concatenate3(' (', {g('morfr')}, Localize('BD_MORR_FRIENDLY'))))", low, filtered=False)
+                rates(g("morr"), "BD_MORR_TITLE", g("morrp"), low, filtered=False)
                 + rates(g("mormv"), "BD_MORMV_TITLE", g("mmvv"), f"And({low}, Not(StringIsEmpty({g('mmvv')})))")
                 + rates(g("morat"), "BD_MORAT_TITLE", g("matv"), f"And({low}, Not(StringIsEmpty({g('matv')})))"))
     maximum = tip("game_concept_morale", ICONS["morale"], "[morale|e]", pair_list(g("mors"), "MAX_MORALE_DUE_TO"))
