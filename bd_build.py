@@ -1347,11 +1347,6 @@ def result_side(s, name, journal=False):
         + stat(ICONS["combined"], "[combined_arms|E]", f"[{g('ca')}]",
                tip("game_concept_combined_arms", ICONS["combined"], "[combined_arms|e]", pair_list(g("cas"))),
                f"Not(StringIsEmpty({g('cas')}))")
-        # the side's combat power, the sum of its unit categories' (power_steps)
-        + stat(f"{ICON}unit_types/combat_power.dds", "BD_POWER", f"#color_yellow [GetVariableSystem.Get(Concatenate({key(f'{s}_pw', SHOWN)}, '_f'))]#!",
-               tip("BD_POWER", f"{ICON}unit_types/combat_power.dds", "[combat_power|e]",
-                   'TooltipTextBlock = {\n\tblockoverride "text" {\n\t\ttext = "BD_POWER_TT"\n\t}\n}\n'),
-               f"Not(StringIsEmpty(GetVariableSystem.Get(Concatenate({key(f'{s}_pw', SHOWN)}, '_f'))))")
         + unit_icons(s, name, journal)
         + "expand = {}\n"
     )
