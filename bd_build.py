@@ -173,7 +173,7 @@ def categories():
 
 def pct(x):
     """A fixed point value as a whole percent with its sign: 0.152 -> '+15%'."""
-    return (f"Concatenate3(Select_CString(GreaterThan_CFixedPoint({x}, '(CFixedPoint)0'), '+', ''), "
+    return (f"BD_Concatenate3(Select_CString(GreaterThan_CFixedPoint({x}, '(CFixedPoint)0'), '+', ''), "
             f"ToString_int32(FixedPointToInt(Multiply_CFixedPoint({x}, '(CFixedPoint)100'))), '%')")
 
 
@@ -181,14 +181,14 @@ def morale_cost(x):
     """A morale cost a day (a fraction of the maximum) as a percent with two decimals, '' when nothing: 0.0123 ->
     '-1.23%'."""
     return (f"Select_CString(GreaterThan_CFixedPoint({x}, '(CFixedPoint)0'), "
-            f"Concatenate3('-', {dec2(f'Multiply_CFixedPoint({x}, {chr(39)}(CFixedPoint)100{chr(39)})')}, '%'), '')")
+            f"BD_Concatenate3('-', {dec2(f'Multiply_CFixedPoint({x}, {chr(39)}(CFixedPoint)100{chr(39)})')}, '%'), '')")
 
 
 def dec2(x):
     """A fixed point value of zero or more with two decimals: 2.5 -> '2.50'."""
     whole = f"FixedPointToInt({x})"
     frac = f"Subtract_int32(FixedPointToInt(Multiply_CFixedPoint({x}, '(CFixedPoint)100')), Multiply_int32({whole}, '(int32)100'))"
-    return (f"Concatenate3(ToString_int32({whole}), '.', Select_CString(LessThan_int32({frac}, '(int32)10'), "
+    return (f"BD_Concatenate3(ToString_int32({whole}), '.', Select_CString(LessThan_int32({frac}, '(int32)10'), "
             f"Concatenate('0', ToString_int32({frac})), ToString_int32({frac})))")
 
 
@@ -201,14 +201,14 @@ def sources(side, name):
     return f"{side}.GetCommander.GetCombatModifierDescription({side}.GetCountry, '{name}', Combat.IsNavalCombat)"
 
 
-TERRAIN = ("Concatenate(Concatenate3(Combat.GetLocation.GetNameWithNoTooltip, ' — ', "
-           "Concatenate3(Combat.GetLocation.GetTopography.GetNameWithNoTooltip, ', ', Combat.GetLocation.GetVegetation.GetNameWithNoTooltip)), "
-           "Concatenate3(Select_CString(Combat.IsRiverCrossing, Localize('BD_RIVER'), ''), "
+TERRAIN = ("Concatenate(BD_Concatenate3(Combat.GetLocation.GetNameWithNoTooltip, ' — ', "
+           "BD_Concatenate3(Combat.GetLocation.GetTopography.GetNameWithNoTooltip, ', ', Combat.GetLocation.GetVegetation.GetNameWithNoTooltip)), "
+           "BD_Concatenate3(Select_CString(Combat.IsRiverCrossing, Localize('BD_RIVER'), ''), "
            "Select_CString(Combat.IsStraitCrossing, Localize('BD_STRAIT'), ''), "
            "Select_CString(Combat.IsSeaLanding, Localize('BD_LANDING'), '')))")
 
 # a roll: both sides' dice (with their modifiers) and the phase; a new one is noted when this changes
-ROLL = ("Concatenate(Concatenate3(ToString_int32(Combat.GetAttacker.GetDiceWithModifiers), ':', "
+ROLL = ("Concatenate(BD_Concatenate3(ToString_int32(Combat.GetAttacker.GetDiceWithModifiers), ':', "
         "ToString_int32(Combat.GetDefender.GetDiceWithModifiers)), Select_CString(Combat.IsInBombardPhase, 'b', 'c'))")
 def short_date():
     """'22 Apr' from the date's text ('22 April, 1337'): the month by its name (the engine's own month names), the day
@@ -219,12 +219,12 @@ def short_date():
     month = join([f"Select_CString(StringContains(GetDateString, Localize('CW_DATE_{m}')), "
                   f"Localize('CW_DATE_{'May' if m == 'May' else m[:3]}'), '')" for m in months])
     day = join([f"Select_CString(StringContains(Concatenate('~', GetDateString), '~{d} '), '{d}', '')" for d in range(1, 32)])
-    return f"Concatenate3({day}, ' ', {month})"
+    return f"BD_Concatenate3({day}, ' ', {month})"
 
 
-ENTRY = ("Concatenate(Concatenate3(ToString_int32(Combat.GetAttacker.GetDiceWithModifiers), ' : ', "
+ENTRY = ("Concatenate(BD_Concatenate3(ToString_int32(Combat.GetAttacker.GetDiceWithModifiers), ' : ', "
          "ToString_int32(Combat.GetDefender.GetDiceWithModifiers)), Select_CString(Combat.IsInBombardPhase, Localize('BD_BOMBARD'), ''))")
-BATTLE_ID = "Concatenate3(Combat.GetKey, '#', ToString_int32(Combat.GetID))"
+BATTLE_ID = "BD_Concatenate3(Combat.GetKey, '#', ToString_int32(Combat.GetID))"
 # The running sums (damage) go by the battle's name and id: a second battle under the same name (at the same place)
 # starts them afresh. The result popup knows the battle only by its name, and takes the id from the battle's notes.
 # a revolt and a civil war are wars; risen rebels are added in case they fight before their war starts
@@ -287,14 +287,14 @@ def battle_steps():
             f"GetVariableSystem.Get('bd_yesterday'), {today}))",
             "GetVariableSystem.Set('bd_today', GetDateString)",
             f"GetVariableSystem.Set('bd_tmp_battle', Select_CString({GOES_ON}, GetVariableSystem.Get({token}), "
-            f"Concatenate3({BATTLE_SLOT}, '@', GetDateString)))",
+            f"BD_Concatenate3({BATTLE_SLOT}, '@', GetDateString)))",
             f"GetVariableSystem.Set({token}, {SUMS_LIVE})",
             f"GetVariableSystem.Set(Concatenate('bd_seenday_', {BATTLE_SLOT}), GetDateString)"]
 
 
 def cat_key(s, category, battle, what="cat"):
     """A unit category's note goes by the category's name: the result popup knows its categories only as objects."""
-    return f"Concatenate3('bd_{s}_{what}_', {category}.GetNameWithNoTooltip, {battle})"
+    return f"BD_Concatenate3('bd_{s}_{what}_', {category}.GetNameWithNoTooltip, {battle})"
 
 
 # set in the recorder before the notes: '1' while the battle goes on (as for the morale), '' on its first day
@@ -352,7 +352,7 @@ def parse_int(x, low=-6, high=6):
 def sum_key(s, which, battle):
     """A side's dice modifiers of the battle's last day noted: 'pos' the sum of the bonuses, 'neg' of the penalties,
     'day' the day they are of."""
-    return f"Concatenate3('bd_{s}_m_', '{which}', {battle})"
+    return f"BD_Concatenate3('bd_{s}_m_', '{which}', {battle})"
 
 
 def dice_recorder(s, name):
@@ -362,7 +362,7 @@ def dice_recorder(s, name):
     # checked every frame: by the battle's key as noted (the scratch one is set only within a chain of notes, and
     # another battle's chain would show these anew)
     stable = f"GetVariableSystem.Get(Concatenate('bd_token_', {BATTLE_SLOT}))"
-    noted = f"Concatenate3('bd_{s}_mg_', CombatModifier.GetKey, {stable})"
+    noted = f"BD_Concatenate3('bd_{s}_mg_', CombatModifier.GetKey, {stable})"
     is_dice = [f"EqualTo_string(CombatModifier.GetKey, '{m}')" for m in DICE_MODS]
     while len(is_dice) > 1:
         is_dice = [f"Or({is_dice[i]}, {is_dice[i + 1]})" if i + 1 < len(is_dice) else is_dice[i] for i in range(0, len(is_dice), 2)]
@@ -616,7 +616,7 @@ def power_steps(s, name, c):
     steps.append(f"GetVariableSystem.Set('bd_tmp_v', ToString_int32({value}))")
     steps += read_number(f"Concatenate({tmp('v')}, '~')", "'~'", "v", 8)
     # once a row (the popup may be opened again)
-    done = f"Concatenate3('bd_pwr_', Concatenate3({tmp('pu')}, '{s}{c}', {row}), '')"
+    done = f"BD_Concatenate3('bd_pwr_', BD_Concatenate3({tmp('pu')}, '{s}{c}', {row}), '')"
     for k, total in ((cat_key(s, f"GetSubUnitCategory('{c}')", tmp("pu"), "pw"), "p"), (key(f"{s}_pw", tmp("pu")), "q")):
         old = f"GetVariableSystem.Get({k})"
         steps += read_number(f"Concatenate(Select_CString(StringIsEmpty({old}), '0', {old}), '~')", "'~'", total, 8)
@@ -662,7 +662,7 @@ def join(parts):
     """Concatenate any number of strings (the GUI joins 2 or 3 at a time)."""
     parts = list(parts) or ["''"]
     while len(parts) > 1:
-        parts = [f"Concatenate3({', '.join(parts[i:i + 3])})" if len(parts[i:i + 3]) == 3 else
+        parts = [f"BD_Concatenate3({', '.join(parts[i:i + 3])})" if len(parts[i:i + 3]) == 3 else
                  (f"Concatenate({', '.join(parts[i:i + 3])})" if len(parts[i:i + 3]) == 2 else parts[i])
                  for i in range(0, len(parts), 3)]
     return parts[0]
@@ -699,7 +699,7 @@ def terrain_notes(s, side, attacker):
                 lines[sign].append(f"Select_CString(And({where}, {present}), {line}, '')")
         for sign, found in lines.items():
             if found:
-                k = f"Concatenate3('bd_{s}_ter{sign}_', GetSubUnitCategory('{cat}').GetNameWithNoTooltip, {SUMS_LIVE})"
+                k = f"BD_Concatenate3('bd_{s}_ter{sign}_', GetSubUnitCategory('{cat}').GetNameWithNoTooltip, {SUMS_LIVE})"
                 notes[k] = kept(k, join(found))
     return notes
 
@@ -711,7 +711,7 @@ DAYS = 40
 
 
 def day_key(index, battle, what):
-    return f"Concatenate3('bd_day{what}_', {index}, {battle})"
+    return f"BD_Concatenate3('bd_day{what}_', {index}, {battle})"
 
 
 def day_event(when, field, value, battle, add_to=False):
@@ -724,7 +724,7 @@ def day_event(when, field, value, battle, add_to=False):
     new = f"Not(StringIsEmpty({tmp('new')}))"
     index = tmp("idx")
     old = f"GetVariableSystem.Get({day_key(index, battle, field)})"
-    value = (f"Concatenate3({old}, Select_CString(StringIsEmpty({old}), '', Localize('BD_SEP')), {value})" if add_to else value)
+    value = (f"BD_Concatenate3({old}, Select_CString(StringIsEmpty({old}), '', Localize('BD_SEP')), {value})" if add_to else value)
     return ([f"GetVariableSystem.Set('bd_tmp_add', Select_CString({when}, '1', ''))",
              f"GetVariableSystem.Set('bd_tmp_new', Select_CString(And({add}, Not(EqualTo_string(GetVariableSystem.Get({last}), GetDateString))), '1', ''))"]
             + read_digits(f"Select_CString(StringIsEmpty({days}), '0{SUM_TAIL}', {days})", repr(SUM_TAIL), "n")
@@ -752,7 +752,7 @@ def arrivals():
     lines = ""
     for s, name in SIDES:
         # checked every frame: by the battle's key as noted (the scratch one is set only within a chain of notes)
-        seen = f"Concatenate3('bd_army_', ToString_int32(Unit.GetID), GetVariableSystem.Get(Concatenate('bd_token_', {BATTLE_SLOT})))"
+        seen = f"BD_Concatenate3('bd_army_', ToString_int32(Unit.GetID), GetVariableSystem.Get(Concatenate('bd_token_', {BATTLE_SLOT})))"
         steps = battle_steps() + [f"GetVariableSystem.Set({seen}, '1')"] + day_event(later, f"j{s}", army, battle, add_to=True)
         # its regiments, added to its side's (for the share of them in the line: frontage_steps)
         steps += add_to_note(side_total_key(repr(s), battle, "regs"), "Unit.GetNumSubUnits", "g", 5)
@@ -767,7 +767,7 @@ def arrivals():
         regs = "Select_CString(GreaterThan_float(Unit.GetTotalRegularCount, '(float)0'), Unit.GetRegularsTooltipText, '')"
         levies = "Select_CString(GreaterThan_float(Unit.GetTotalLevyCount, '(float)0'), Unit.GetLeviesTooltipText, '')"
         for f, value in (("t", army), ("r", regs), ("l", levies)):
-            k = f"Concatenate3(Concatenate3('bd_dayj{s}', {tmp('k')}, '{f}_'), {index}, {battle})"
+            k = f"BD_Concatenate3(BD_Concatenate3('bd_dayj{s}', {tmp('k')}, '{f}_'), {index}, {battle})"
             steps.append(f"GetVariableSystem.Set({k}, Select_CString({add}, {value}, GetVariableSystem.Get({k})))")
         starts = "".join(f'\t\t\t\ton_start = "[{st}]"\n' for st in steps)
         lines += (f'vbox = {{\n\tdatamodel = "[Combat.Get{name}.GetUnits]"\n\titem = {{\n\t\twidget = {{\n\t\t\tsize = {{ 0 0 }}\n'
@@ -827,7 +827,7 @@ def flank_rows():
             was = f"GetVariableSystem.Get({held[f]})"
             steps.append(f"GetVariableSystem.Set('bd_tmp_ch{f[0]}', Select_CString(And(Not(StringIsEmpty({was})), "
                          f"Not(EqualTo_string({was}, Select_CString({has_men[f]}, '1', '0')))), '1', ''))")
-        steps += day_event(f"Not(StringIsEmpty(Concatenate3({tmp('chL')}, {tmp('chC')}, {tmp('chR')})))", f"f{s}", state, SUMS_LIVE)
+        steps += day_event(f"Not(StringIsEmpty(BD_Concatenate3({tmp('chL')}, {tmp('chC')}, {tmp('chR')})))", f"f{s}", state, SUMS_LIVE)
         steps += [f"GetVariableSystem.Set({held[f]}, Select_CString({has_men[f]}, '1', '0'))" for f in FLANKS]
     return steps
 
@@ -878,7 +878,7 @@ def log_block():
         # and one height for the first line of a day, whatever it holds, with the date in its middle
         slot = lambda state, anchor: (f'widget = {{\n\tsize = {{ {SQUARES_WIDTH} {LINE} }}\n'
                                       + indent(flank_squares(state).replace("hbox = {\n", f"hbox = {{\n\tparentanchor = {anchor}|vcenter\n", 1), 1) + '}\n')
-        first = (f'hbox = {{\n\tvisible = "[Not(StringIsEmpty(Concatenate3({g("roll")}, {g("fa")}, {g("fd")})))]"\n'
+        first = (f'hbox = {{\n\tvisible = "[Not(StringIsEmpty(BD_Concatenate3({g("roll")}, {g("fa")}, {g("fd")})))]"\n'
                  + indent(slot(g("fa"), "left"), 1)
                  + f'\ttext_single = {{\n\t\tminimumsize = {{ {ROLL_WIDTH} {LINE} }}\n\t\tmaximumsize = {{ {ROLL_WIDTH} {LINE} }}\n\t\tfontsize = 14\n'
                  f'\t\talign = center|nobaseline\n\t\tvisible = "[StringIsEmpty({g("ra")})]"\n\t\ttext = "[{g("roll")}]"\n\t}}\n'
@@ -933,7 +933,7 @@ def recorder():
     # morale as the battle began: noted on its first day only
     for s, name in SIDES:
         side = f"Combat.Get{name}"
-        notes |= {f"{s}_morv": f"Select_CString({same_battle}, {get(f'{s}_morv', SUMS_LIVE)}, Concatenate3("
+        notes |= {f"{s}_morv": f"Select_CString({same_battle}, {get(f'{s}_morv', SUMS_LIVE)}, BD_Concatenate3("
                                 f"{dec2(f'{side}.GetAverageMorale')}, ' / ', {dec2(f'{side}.GetMaxMorale')}))",
                   f"{s}_mor": f"Select_CString({same_battle}, {get(f'{s}_mor', SUMS_LIVE)}, {side}.GetMoraleTooltip)",
                   # what makes the maximum, of the side's leading army (as the game's army tooltip has it)
@@ -942,7 +942,7 @@ def recorder():
         unit = f"{side}.GetLeadingUnit"
         low = f"LessThan_CFixedPoint({side}.GetAverageMorale, Multiply_CFixedPoint({side}.GetMaxMorale, '(CFixedPoint)0.99'))"
         for k, v in (("mrs", dec2(f"{side}.GetAverageMorale")), ("mrm", dec2(f"{side}.GetMaxMorale")),
-                     ("morlow", f"Select_CString({low}, '1', '')"), ("morrp", f"Concatenate3('+', {dec2(f'Multiply_CFixedPoint({unit}.GetMoraleRecoveryPercent, {chr(39)}(CFixedPoint)100{chr(39)})')}, '%')"),
+                     ("morlow", f"Select_CString({low}, '1', '')"), ("morrp", f"BD_Concatenate3('+', {dec2(f'Multiply_CFixedPoint({unit}.GetMoraleRecoveryPercent, {chr(39)}(CFixedPoint)100{chr(39)})')}, '%')"),
                      ("morr", f"{unit}.GetMoraleRecoveryInfo"), ("mormv", f"{unit}.GetMovementMoraleCostInfo"),
                      ("morat", f"{unit}.GetAttritionMoraleCostInfo"),
                      # the day's losses to moving and to attrition, as percents of the maximum; none when nothing
@@ -968,7 +968,7 @@ def recorder():
         # TEST: the chain began (the day's note is set at its end: the two apart tell a chain cut short), and the last
         # chain of the session, with the battle it went to
         starts += (f'\t\ton_start = "[GetVariableSystem.Set(Concatenate(\'bd_fired_\', {SUMS_LIVE}), GetDateString)]"\n'
-                   f'\t\ton_start = "[GetVariableSystem.Set(\'bd_lastfire\', Concatenate3(GetDateString, \' \', {SUMS_LIVE}))]"\n'
+                   f'\t\ton_start = "[GetVariableSystem.Set(\'bd_lastfire\', BD_Concatenate3(GetDateString, \' \', {SUMS_LIVE}))]"\n'
                    # whether a new variable can still be made (a cap on their number would stop the notes silently)
                    '\t\ton_start = "[GetVariableSystem.Set(Concatenate(\'bd_probe_\', GetDateString), \'1\')]"\n'
                    '\t\ton_start = "[GetVariableSystem.Set(\'bd_probe_ok\', Select_CString(GetVariableSystem.Exists('
@@ -979,7 +979,7 @@ def recorder():
         # TEST: every battle seen this session (before the id is noted, while same_battle still tells a new one)
         seen = "GetVariableSystem.Get('bd_seen')"
         starts += (f'\t\ton_start = "[GetVariableSystem.Set(\'bd_seen\', Select_CString({same_battle}, {seen}, '
-                   f'Concatenate3({seen}, \' | \', {LIVE})))]"\n')
+                   f'BD_Concatenate3({seen}, \' | \', {LIVE})))]"\n')
     # a new roll is a row of the chain (before 'last' is noted, while old_last still holds the one before)
     roll_row = day_event(f"Not(EqualTo_string({old_last}, {ROLL}))", "roll", ENTRY, SUMS_LIVE)
     # and its two numbers apart, so the colon stands in the same place on every line; a roll of the bombard phase
@@ -1070,7 +1070,7 @@ def number(name):
 
 
 def side_total_key(side, battle, what="all"):
-    return f"Concatenate3('bd_', {side}, Concatenate('_{what}_', {battle}))"
+    return f"BD_Concatenate3('bd_', {side}, Concatenate('_{what}_', {battle}))"
 
 
 ICON = "gfx/interface/icons/"
@@ -1162,7 +1162,7 @@ def terrain_arrows(s, category):
     arrows = ""
     for which, sign, texture, color, corner in (("p", "+", "arrow_up", "{ 0.35 0.85 0.35 1 }", "top"),
                                                 ("n", "−", "arrow_down", "{ 0.95 0.3 0.3 1 }", "bottom")):
-        notes = f"GetVariableSystem.Get(Concatenate3('bd_{s}_ter{which}_', {category}.GetNameWithNoTooltip, {SHOWN}))"
+        notes = f"GetVariableSystem.Get(BD_Concatenate3('bd_{s}_ter{which}_', {category}.GetNameWithNoTooltip, {SHOWN}))"
         arrows += (f'icon = {{\n\tsize = {{ 11 11 }}\n\tparentanchor = right|{corner}\n\ttexture = "{ICON}flat_icons/{texture}.dds"\n\tcolor = {color}\n'
                    f'\tvisible = "[StringContains({notes}, \'{sign}\')]"\n\talwaystransparent = no\n'
                    + indent(tip("BD_TERRAIN_TITLE", f"{ICON}flat_icons/{texture}.dds", "[topography|e]",
@@ -1349,7 +1349,7 @@ def morale_row(g):
         row_shown = is_modifier if filtered else f"Not(StringContains({left}, 'Multiplied by'))"
         rows = (f'vbox = {{\n\tlayoutpolicy_horizontal = expanding\n\tminimumsize = {{ 300 -1 }}\n\tvisible = "[{shown}]"\n'
                 f'\ttext_single = {{\n\t\tmargin = {{ 8 4 }}\n\t\tdefault_format = "#high"\n'
-                f'\t\ttext = "[Concatenate3(Localize(\'{title}\'), \' \', {total})]"\n\t}}\n'
+                f'\t\ttext = "[BD_Concatenate3(Localize(\'{title}\'), \' \', {total})]"\n\t}}\n'
                 f'\tvbox = {{\n\t\tlayoutpolicy_horizontal = expanding\n\t\tdatacontext = "[StringToStringPairList({info})]"\n'
                 '\t\tdatamodel = "[StringPairList.GetRows]"\n\t\titem = {\n'
                 f'\t\t\thbox = {{\n\t\t\t\tvisible = "[{row_shown}]"\n\t\t\t\tlayoutpolicy_horizontal = expanding\n\t\t\t\tmargin = {{ 8 2 }}\n'
@@ -1608,7 +1608,7 @@ def journal_outcome():
         noted = f"GetVariableSystem.Get({key(f'{s}_trt', tmp('pu'))})"
         trait = "Trait.GetNameWithNoTooltip"
         add = (f"Select_CString(StringContains({noted}, {trait}), {noted}, "
-               f"Concatenate3({noted}, Select_CString(StringIsEmpty({noted}), '', ', '), {trait}))")
+               f"BD_Concatenate3({noted}, Select_CString(StringIsEmpty({noted}), '', ', '), {trait}))")
         traits = (f'\t\t\t\ton_start = "[GetVariableSystem.Set(\'bd_tmp_pu\', {popup_match()})]"\n'
                   f'\t\t\t\ton_start = "[GetVariableSystem.Set({key(f"{s}_trt", tmp("pu"))}, {add})]"\n')
         for model, shown_if in trait_lists(f"{side}.GetCommander"):
@@ -1775,6 +1775,12 @@ def debug_lines():
 def main():
     if os.path.isdir(OUT):
         shutil.rmtree(OUT)
+    # the game has no 3-string Concatenate: the macro is the mod's own (Construction Manager's Concatenate3 was used
+    # before, so the mod failed without it)
+    write("in_game/data_binding/bd_gui_macros.txt",
+          'macro = {\n\tdescription = "Concatenates 3 strings together"\n'
+          '\tdefinition = "BD_Concatenate3(String1,String2,String3)"\n'
+          '\treplace_with = "Concatenate(Concatenate(String1,String2),String3)"\n}\n')
     write("in_game/gui/bd_types.gui", types())
     write("in_game/gui/bd_recorder.gui", recorder())
     # a widget of its own file is made only when listed here
@@ -1788,7 +1794,7 @@ def main():
     for lang in LANGS:
         lines = TEXT.get(lang, TEXT["english"])
         write(f"main_menu/localization/{lang}/bd_l_{lang}.yml", f"l_{lang}:\n" + "".join(f' {k}: "{v}"\n' for k, v in lines.items()))
-    meta = {"name": "Battle Details" if RELEASE else "Battle Details [LOCAL]", "id": "grackbox.battle_details", "version": "0.1.1", "game_id": "eu5",
+    meta = {"name": "Battle Details" if RELEASE else "Battle Details [LOCAL]", "id": "grackbox.battle_details", "version": "0.1.2", "game_id": "eu5",
             "supported_game_version": "1.4.*",
             "short_description": "The battle window and the battle result laid open: dice and their sources, morale, discipline, tactics, and every roll.",
             "tags": ["User Interface", "Military", "1.4"],

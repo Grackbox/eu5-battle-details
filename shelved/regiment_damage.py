@@ -24,7 +24,7 @@ def thousands_of_digits(name):
 
 def damage_key(side, category, battle, what):
     """A side's damage note for a unit category; `side` is an expression giving 'a' or 'd'."""
-    return f"Concatenate3(Concatenate3('bd_', {side}, '_{what}_'), {category}.GetNameWithNoTooltip, {battle})"
+    return f"BD_Concatenate3(BD_Concatenate3('bd_', {side}, '_{what}_'), {category}.GetNameWithNoTooltip, {battle})"
 
 
 TARGETS = ("army_light_infantry", "army_heavy_infantry", "army_light_cavalry", "army_heavy_cavalry",
@@ -34,12 +34,12 @@ UNCLEAR = "unclear"
 
 def target_key(side, category, target, battle, what):
     """The damage a side's unit category did to one enemy category (`target` an expression giving its key)."""
-    return (f"Concatenate3(Concatenate3('bd_', {side}, '_{what}_'), Concatenate3({category}.GetNameWithNoTooltip, '_', {target}), "
+    return (f"BD_Concatenate3(BD_Concatenate3('bd_', {side}, '_{what}_'), BD_Concatenate3({category}.GetNameWithNoTooltip, '_', {target}), "
             f"{battle})")
 
 
 def side_total_key(side, battle, what="all"):
-    return f"Concatenate3('bd_', {side}, Concatenate('_{what}_', {battle}))"
+    return f"BD_Concatenate3('bd_', {side}, Concatenate('_{what}_', {battle}))"
 
 
 def damage_steps(side, category, battle):
